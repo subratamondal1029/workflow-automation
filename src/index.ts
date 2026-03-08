@@ -6,4 +6,6 @@ const sub = (a: number, b: number): number => {
   return a - b;
 };
 
-export { sum, sub };
+const user = { name: "Subrata" };
+
+export { sum, sub, user };
