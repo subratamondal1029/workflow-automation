@@ -2,4 +2,8 @@ const sum = (a: number, b: number): number => {
   return a + b;
 };
 
-export { sum };
+const sub = (a: number, b: number): number => {
+  return a - b;
+};
+
+export { sum, sub };
