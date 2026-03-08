@@ -1,4 +1,4 @@
-import { exec } from "child_process";
+import { execFile } from "child_process";
 
 const sum = (a: number, b: number): number => {
   return a + b;
@@ -18,7 +18,7 @@ const getData = () => {
 
 // test codeql dot in github
 function echo(userInput: string) {
-  exec("echo " + userInput);
+  execFile("echo", [userInput]);
 }
 
 export { sum, sub, getData, echo };
