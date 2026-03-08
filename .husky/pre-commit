@@ -1,0 +1,4 @@
+echo "PRE COMMIT CHECKS"
+
+npm run lint-staged
+npm test
