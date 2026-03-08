@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 . "$(dirname "$0")/_/h"
 
+echo "HOOK RUNNING"
+
 npm test
 npm run lint-staged
