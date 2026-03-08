@@ -20,4 +20,4 @@ const getData = () => {
     },
   });
 };
-export { sum, sub, getData, echo };
+export { sum, sub, getData, getData2, echo };
