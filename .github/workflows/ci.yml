@@ -14,8 +14,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - run: npm install
+      - run: npm ci
       - run: npm run format:check
       - run: npm run lint
       - run: npm run type:check
@@ -29,8 +30,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - run: npm install
+      - run: npm ci
       - run: npm test
 
   build:
@@ -42,6 +44,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - run: npm install
+      - run: npm ci
       - run: npm run build
