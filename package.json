@@ -1,0 +1,33 @@
+{
+  "name": "workflow-automation",
+  "version": "1.0.0",
+  "description": "This project is just to learn pr automation",
+  "keywords": [
+    "Learn",
+    "pull-request",
+    "CodeRabbit",
+    "CodeQL",
+    "CI"
+  ],
+  "homepage": "https://github.com/subratamondal1029/workflow-automation#readme",
+  "bugs": {
+    "url": "https://github.com/subratamondal1029/workflow-automation/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/subratamondal1029/workflow-automation.git"
+  },
+  "license": "ISC",
+  "author": "Subrata Mondal",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test:watch": "vitest",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}
