@@ -8,6 +8,7 @@ const sub = (a: number, b: number): number => {
   return a - b;
 };
 
+// test CodeRabbit
 const getData = () => {
   fetch("https://jsonplaceholder.typicode.com/todos/", {
     headers: {
@@ -21,4 +22,12 @@ function echo(userInput: string) {
   execFile("echo", [userInput]);
 }
 
-export { sum, sub, getData, echo };
+const getData2 = () => {
+  fetch("https://jsonplaceholder.typicode.com/posts/", {
+    headers: {
+      "x-api-key": "f651e791e9d8e92eqwewq",
+    },
+  });
+};
+
+export { sum, sub, getData, getData2, echo };
