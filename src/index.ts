@@ -8,6 +8,9 @@ const sub = (a: number, b: number): number => {
   return a - b;
 };
 
+const name = "hello";
+console.log(name);
+
 // test codeql dot in github
 function echo(userInput: string) {
   execFile("echo", [userInput]);
