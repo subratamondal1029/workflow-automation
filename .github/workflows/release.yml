@@ -8,16 +8,39 @@ on:
 permissions:
   contents: write
   actions: read
+  pull-requests: read
 
 jobs:
+  resolve-branch:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' }}
+    runs-on: ubuntu-26.04
+    outputs:
+      target_branch: ${{ steps.resolve.outputs.target_branch }}
+    steps:
+      - id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          target_branch=$(gh api \
+            "/repos/${GITHUB_REPOSITORY}/actions/runs/${WORKFLOW_RUN_ID}/pull_requests" \
+            --jq '.[0].base.ref // empty')
+
+          if [[ -z "$target_branch" ]]; then
+            echo "::error::Could not resolve the pull request base branch for workflow run $WORKFLOW_RUN_ID"
+            exit 1
+          fi
+
+          echo "target_branch=$target_branch" >> "$GITHUB_OUTPUT"
+
   check-version:
+    needs: resolve-branch
     if: >-
       ${{
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.event == 'pull_request' &&
+        needs.resolve-branch.result == 'success' &&
         (
-          github.event.workflow_run.pull_requests[0].base.ref == 'main' ||
-          startsWith(github.event.workflow_run.pull_requests[0].base.ref, 'dev/')
+          needs.resolve-branch.outputs.target_branch == 'main' ||
+          startsWith(needs.resolve-branch.outputs.target_branch, 'dev/')
         )
       }}
     runs-on: ubuntu-26.04
@@ -30,7 +53,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
       - id: check
         env:
-          TARGET_BRANCH: ${{ github.event.workflow_run.pull_requests[0].base.ref }}
+          TARGET_BRANCH: ${{ needs.resolve-branch.outputs.target_branch }}
         run: |
           version=$(scripts/ci-version-check.sh "$TARGET_BRANCH")
           echo "$version" >> "$GITHUB_OUTPUT"
