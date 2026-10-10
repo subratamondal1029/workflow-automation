@@ -20,14 +20,16 @@ jobs:
       - id: resolve
         env:
           GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           target_branch=$(gh api \
-            "/repos/${GITHUB_REPOSITORY}/actions/runs/${WORKFLOW_RUN_ID}/pull_requests" \
+            "/repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/pulls" \
+            -H "Accept: application/vnd.github+json" \
             --jq '.[0].base.ref // empty')
 
           if [[ -z "$target_branch" ]]; then
-            echo "::error::Could not resolve the pull request base branch for workflow run $WORKFLOW_RUN_ID"
+            echo "::error::Could not resolve the pull request base branch for workflow run $WORKFLOW_RUN_ID and commit $HEAD_SHA"
             exit 1
           fi
 
