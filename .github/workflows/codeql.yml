@@ -1,8 +1,10 @@
 name: CodeQL
 
+# NOTE: temporary disable for test something new
 on:
-  pull_request:
-    branches: ["main"]
+  workflow_dispatch
+  # pull_request:
+  #   branches: ["main"]
 
 jobs:
   analyze:
