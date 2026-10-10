@@ -11,6 +11,66 @@ TARGET_BRANCH="$1"
 PACKAGE_JSON="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/package.json"
 LOCAL_VERSION="$(jq -r '.version' "$PACKAGE_JSON")"
 
+if ! [[ "$LOCAL_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$ ]]; then
+    echo "::error::Invalid SemVer: $LOCAL_VERSION"
+    exit 1
+fi
+
+semver_greater() {
+    local first="$1"
+    local second="$2"
+    local first_major first_minor first_patch first_beta
+    local second_major second_minor second_patch second_beta
+
+    if [[ "$first" == "$second" ]]; then
+        return 1
+    fi
+
+    if [[ "$first" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-beta\.([0-9]+))?$ ]]; then
+        first_major="${BASH_REMATCH[1]}"
+        first_minor="${BASH_REMATCH[2]}"
+        first_patch="${BASH_REMATCH[3]}"
+        first_beta="${BASH_REMATCH[5]:-}"
+    else
+        return 1
+    fi
+
+    if [[ "$second" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-beta\.([0-9]+))?$ ]]; then
+        second_major="${BASH_REMATCH[1]}"
+        second_minor="${BASH_REMATCH[2]}"
+        second_patch="${BASH_REMATCH[3]}"
+        second_beta="${BASH_REMATCH[5]:-}"
+    else
+        return 1
+    fi
+
+    if ((10#$first_major != 10#$second_major)); then
+        ((10#$first_major > 10#$second_major))
+        return
+    fi
+    if ((10#$first_minor != 10#$second_minor)); then
+        ((10#$first_minor > 10#$second_minor))
+        return
+    fi
+    if ((10#$first_patch != 10#$second_patch)); then
+        ((10#$first_patch > 10#$second_patch))
+        return
+    fi
+
+    if [[ -z "$first_beta" && -n "$second_beta" ]]; then
+        return 0
+    fi
+    if [[ -n "$first_beta" && -z "$second_beta" ]]; then
+        return 1
+    fi
+    if [[ -n "$first_beta" && -n "$second_beta" ]]; then
+        ((10#$first_beta > 10#$second_beta))
+        return
+    fi
+
+    return 1
+}
+
 case "$TARGET_BRANCH" in
     main)
         if [[ "$LOCAL_VERSION" == *-beta.* ]]; then
@@ -30,8 +90,15 @@ case "$TARGET_BRANCH" in
         ;;
 esac
 
-REMOTE_VERSION="$(git ls-remote --tags --refs origin 'v*' \
-    | sed 's|.*refs/tags/v||' | sort -V | tail -n1)"
+REMOTE_VERSION=""
+while IFS= read -r tag_version; do
+    if ! [[ "$tag_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$ ]]; then
+        continue
+    fi
+    if [[ -z "$REMOTE_VERSION" ]] || semver_greater "$tag_version" "$REMOTE_VERSION"; then
+        REMOTE_VERSION="$tag_version"
+    fi
+done < <(git ls-remote --tags --refs origin 'v*' | sed 's|.*refs/tags/v||')
 
 echo "local=$LOCAL_VERSION remote=${REMOTE_VERSION:-none}" >&2
 
@@ -41,8 +108,7 @@ if [[ -n "$REMOTE_VERSION" ]]; then
         exit 1
     fi
 
-    HIGHEST_VERSION="$(printf '%s\n%s\n' "$REMOTE_VERSION" "$LOCAL_VERSION" | sort -V | tail -n1)"
-    if [[ "$HIGHEST_VERSION" != "$LOCAL_VERSION" ]]; then
+    if ! semver_greater "$LOCAL_VERSION" "$REMOTE_VERSION"; then
         echo "::error::Local $LOCAL_VERSION is lower than remote $REMOTE_VERSION"
         exit 1
     fi
