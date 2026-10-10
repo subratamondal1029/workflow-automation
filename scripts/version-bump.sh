@@ -6,7 +6,7 @@ usage() {
     cat <<EOF
 Usage: $0 {patch|minor|major|pre} [-b]
 
-Bump the version in package.json.
+Bump the version in package.json and package-lock.json.
 
 Commands:
   patch              Increment the patch version
@@ -61,6 +61,7 @@ esac
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 PACKAGE_JSON="$ROOT_DIR/package.json"
+PACKAGE_LOCK_JSON="$ROOT_DIR/package-lock.json"
 
 CURRENT_VERSION="$(jq -r '.version' "$PACKAGE_JSON")"
 
@@ -115,15 +116,22 @@ elif [[ "$BUMP_TYPE" == "pre" ]]; then
     NEXT_VERSION="$NEXT_VERSION-beta.$BETA_VERSION"
 fi
 
-# Update package.json
+# Update package.json and package-lock.json
 jq --arg version "$NEXT_VERSION" \
     '.version = $version' \
     "$PACKAGE_JSON" > "$PACKAGE_JSON.tmp"
 
 mv "$PACKAGE_JSON.tmp" "$PACKAGE_JSON"
 
+jq --arg version "$NEXT_VERSION" \
+    '.version = $version
+     | .packages[""].version = $version' \
+    "$PACKAGE_LOCK_JSON" > "$PACKAGE_LOCK_JSON.tmp"
+
+mv "$PACKAGE_LOCK_JSON.tmp" "$PACKAGE_LOCK_JSON"
+
 # git tag
-git add "$PACKAGE_JSON"
+git add "$PACKAGE_JSON" "$PACKAGE_LOCK_JSON"
 git commit -m "chore(version): $NEXT_VERSION"
 # git tag will trigger after build success in github ci
 
