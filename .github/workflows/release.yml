@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
+    branches:
+      - main
+      - "dev/**"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  check-version:
+    if: >-
+      ${{
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'pull_request' &&
+        (
+          github.event.workflow_run.pull_requests[0].base.ref == 'main' ||
+          startsWith(github.event.workflow_run.pull_requests[0].base.ref, 'dev/')
+        )
+      }}
+    runs-on: ubuntu-26.04
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      target_branch: ${{ steps.check.outputs.target_branch }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - id: check
+        env:
+          TARGET_BRANCH: ${{ github.event.workflow_run.pull_requests[0].base.ref }}
+        run: |
+          version=$(scripts/ci-version-check.sh "$TARGET_BRANCH")
+          echo "$version" >> "$GITHUB_OUTPUT"
+          echo "target_branch=$TARGET_BRANCH" >> "$GITHUB_OUTPUT"
+
+  release:
+    needs: check-version
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: app-zip
+          path: artifacts
+          merge-multiple: true
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          tag_name: v${{ needs.check-version.outputs.version }}
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          name: v${{ needs.check-version.outputs.version }}
+          prerelease: ${{ needs.check-version.outputs.target_branch != 'main' }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: artifacts/*
