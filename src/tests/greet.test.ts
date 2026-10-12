@@ -1,4 +1,4 @@
-import { greet } from "@/index.js";
+import { greet } from "../index.js";
 
 test("greet function works correctly", () => {
   const name = "Alice";
