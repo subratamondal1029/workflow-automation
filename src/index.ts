@@ -23,4 +23,9 @@ const getData = () => {
     },
   });
 };
-export { sum, sub, getData, echo };
+
+const greet = (name: string) => {
+  console.log(`Hello, ${name}!`);
+};
+
+export { sum, sub, getData, echo, greet };
