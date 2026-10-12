@@ -25,7 +25,7 @@ const getData = () => {
 };
 
 const greet = (name: string) => {
-  console.log(`Hello, ${name}!`);
+  return `Hello, ${name}!`;
 };
 
 export { sum, sub, getData, echo, greet };
